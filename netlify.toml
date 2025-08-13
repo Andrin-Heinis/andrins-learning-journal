@@ -1,7 +1,7 @@
 [build]
-  command = "npm ci && npm run generate && echo '--- LS .output/public ---' && ls -la .output/public"
+  command = "npm ci --no-audit && npm run generate && echo '--- LS .output/public ---' && ls -la .output/public"
   publish = ".output/public"
 
 [build.environment]
   NODE_VERSION = "20"
-  NITRO_PRESET = "netlify-static"
+  NPM_CONFIG_AUDIT = "false"
