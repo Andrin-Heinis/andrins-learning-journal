@@ -1,0 +1,148 @@
+const groups=[
+  {title:"Classes",icon:"fa-regular fa-calendar",prefix:"1.Classes"},
+  {title:"Grades",icon:"fa-solid fa-graduation-cap",prefix:"2.Grades"},
+  {title:"Journal",icon:"fa-solid fa-book",prefix:"3.Journal"}
+];
+const nocache={cache:"no-store",headers:{"Cache-Control":"no-store"}};
+const enc=p=>{
+  const [path,query]=p.split("?");
+  const encoded=path.split("/").map(encodeURIComponent).join("/");
+  return query?`${encoded}?${query}`:encoded;
+};
+const parts=p=>p.split("/").filter(Boolean);
+function buildTree(paths){
+  const root={};
+  for(const p of paths){
+    const ps=parts(p);
+    let cur=root;
+    for(let i=0;i<ps.length;i++){
+      const part=ps[i];
+      if(!cur[part])cur[part]={_children:{},_file:false};
+      if(i===ps.length-1)cur[part]._file=true;
+      cur=cur[part]._children;
+    }
+  }
+  return root;
+}
+function iconFor(name,isFile){
+  if(isFile)return"fa-regular fa-note-sticky";
+  const n=name.toLowerCase();
+  if(n.startsWith("year"))return"fa-regular fa-calendar";
+  if(n.startsWith("week"))return"fa-regular fa-calendar-days";
+  return"fa-regular fa-folder";
+}
+function titleFrom(basename){
+  return basename.replace(/^[0-9]+\./,"").replace(/\.md$/,"").replace(/-/g,".");
+}
+function byFolderAware(a,b){
+  const rx=/^([0-9]+)\./;
+  const an=a.split("/").pop(),bn=b.split("/").pop();
+  const aa=rx.exec(an),bb=rx.exec(bn);
+  if(aa&&bb)return Number(aa[1])-Number(bb[1])||a.localeCompare(b,undefined,{numeric:true});
+  return a.localeCompare(b,undefined,{numeric:true});
+}
+async function fetchList(){
+  try{
+    const url=`content/index.json?v=${Date.now()}`;
+    const res=await fetch(enc(url),nocache);
+    if(!res.ok)throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  }catch(e){
+    const el=document.getElementById("content");
+    if(el)el.innerHTML=`<p>Liste konnte nicht geladen werden: ${e.message}</p>`;
+    console.error("fetchList",e);
+    throw e;
+  }
+}
+
+function makeSummaryRow(text,icon){
+  const row=document.createElement("div");
+  row.style.display="flex";row.style.alignItems="center";row.style.gap="8px";
+  const chev=document.createElement("span");chev.className="chev";chev.innerHTML="&#9656;";
+  const ic=document.createElement("i");ic.className=`icon ${icon}`;
+  const label=document.createElement("span");label.textContent=text;
+  row.append(chev,ic,label);
+  return row;
+}
+function renderTree(node,base){
+  const ul=document.createElement("ul");ul.className="tree";
+  const keys=Object.keys(node).sort(byFolderAware);
+  for(const key of keys){
+    const li=document.createElement("li");
+    const data=node[key];
+    if(data._file){
+      const a=document.createElement("a");
+      a.href="#";a.className="file";a.dataset.path=`${base}/${key}`;
+      const ic=document.createElement("i");ic.className="icon fa-regular fa-note-sticky";
+      const tt=document.createElement("span");tt.textContent=titleFrom(key);
+      a.append(ic,tt);li.appendChild(a);
+    }else{
+      const det=document.createElement("details");
+      const sum=document.createElement("summary");
+      sum.append(makeSummaryRow(key,iconFor(key,false)));
+      det.append(sum);
+      det.append(renderTree(data._children,`${base}/${key}`));
+      li.appendChild(det);
+    }
+    ul.appendChild(li);
+  }
+  return ul;
+}
+async function buildNav(list){
+  const nav=document.getElementById("sidebar");nav.innerHTML="";
+  for(const group of groups){
+    const box=document.createElement("div");
+    const title=document.createElement("div");
+    title.className="group-title";
+    title.innerHTML=`<i class="${group.icon}" style="margin-right:8px;color:#9aa3b3"></i>${group.title}`;
+    box.appendChild(title);
+    const subset=list.filter(p=>p.startsWith(group.prefix+"/")).map(p=>p.replace(group.prefix+"/",""));
+    const tree=buildTree(subset);
+    const ul=renderTree(tree,group.prefix);
+    box.appendChild(ul);
+    nav.appendChild(box);
+    nav.appendChild(document.createElement("div")).className="separator";
+  }
+}
+function setActive(a){
+  document.querySelectorAll(".file.active").forEach(x=>x.classList.remove("active"));
+  if(a)a.classList.add("active");
+}
+async function loadFile(path,a){
+  setActive(a);
+  try{
+    const url=`content/${path}`;
+    const res=await fetch(enc(url)+`?v=${Date.now()}`,nocache);
+    if(!res.ok)throw new Error(`HTTP ${res.status}`);
+    const md=await res.text();
+    document.getElementById("content").innerHTML=marked.parse(md);
+  }catch(e){
+    document.getElementById("content").innerHTML=`<p>Fehler beim Laden: <code>${path}</code> – ${e.message}</p>`;
+  }
+}
+async function init(){
+  try{
+    const list=await fetchList();
+    await buildNav(list);
+    document.getElementById("sidebar").addEventListener("click",e=>{
+      const a=e.target.closest("a.file");if(!a)return;
+      e.preventDefault();loadFile(a.dataset.path,a);
+    });
+    const journals=list.filter(p=>p.startsWith("3.Journal/")).sort(byFolderAware);
+    const first=journals[journals.length-1]||list[0];
+    if(!first)return;
+    const a=[...document.querySelectorAll("a.file")].find(x=>x.dataset.path===first);
+    if(a){
+      let d=a.closest("details");while(d){d.setAttribute("open","");d=d.parentElement.closest("details");}
+      await loadFile(first,a);
+    }else{
+      await loadFile(first,null);
+    }
+  }catch(e){
+    const el=document.getElementById("content");
+    if(el)el.innerHTML=`<p>Fehler beim Initialisieren: ${e.message}</p>`;
+    console.error("init",e);
+  }
+}
+
+init();
