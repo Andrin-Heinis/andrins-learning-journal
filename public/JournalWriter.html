@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Journal Markdown Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0b0d10;
+        --text: #e6e9ef;
+        --sub: #aab2c0;
+        --accent: #7c8cff;
+        --glass: rgba(255, 255, 255, 0.06);
+        --glass-strong: rgba(255, 255, 255, 0.1);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto,
+          Helvetica, Arial, sans-serif;
+        color: var(--text);
+        background: var(--bg);
+        overflow-x: hidden;
+      }
+      .bg {
+        position: fixed;
+        inset: 0;
+        z-index: -2;
+        background: radial-gradient(40% 40% at 15% 20%, #5b7cfa33 0%, #0000 70%),
+          radial-gradient(35% 35% at 85% 25%, #ff5bd233 0%, #0000 70%),
+          radial-gradient(45% 45% at 70% 80%, #35f5b533 0%, #0000 70%),
+          radial-gradient(60% 60% at 25% 80%, #a55bff33 0%, #0000 70%);
+        filter: blur(40px) saturate(120%);
+        animation: float 22s ease-in-out infinite alternate;
+      }
+      .bg2 {
+        position: fixed;
+        inset: -10%;
+        z-index: -3;
+        opacity: 0.7;
+        background: conic-gradient(
+          from 0deg at 50% 50%,
+          #2b2e4a,
+          #1b1f3b,
+          #0f1225,
+          #1b1f3b,
+          #2b2e4a
+        );
+        filter: blur(140px);
+        animation: swirl 60s linear infinite;
+      }
+      @keyframes float {
+        0% {
+          transform: translate3d(0, 0, 0) scale(1);
+        }
+        100% {
+          transform: translate3d(0, -3%, 0) scale(1.05);
+        }
+      }
+      @keyframes swirl {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .container {
+        max-width: 860px;
+        margin: 4rem auto;
+        padding: 0 1.2rem;
+      }
+      .header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+      }
+      .dot {
+        width: 0.85rem;
+        height: 0.85rem;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 24px var(--accent);
+      }
+      h1 {
+        margin: 0;
+        font-size: 1.6rem;
+        letter-spacing: 0.2px;
+      }
+      .card {
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.08),
+          rgba(255, 255, 255, 0.04)
+        );
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 18px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45),
+          inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        overflow: hidden;
+        backdrop-filter: blur(16px);
+      }
+      .card-inner {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1px;
+        background: rgba(255, 255, 255, 0.08);
+      }
+      .panel {
+        padding: 1.25rem;
+        background: rgba(10, 12, 18, 0.65);
+      }
+      label {
+        display: block;
+        font-size: 0.9rem;
+        color: var(--sub);
+        margin: 0.5rem 0 0.35rem;
+      }
+      input[type="date"],
+      textarea {
+        width: 100%;
+        background: var(--glass);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        color: var(--text);
+        border-radius: 12px;
+        padding: 0.85rem 0.95rem;
+        outline: none;
+      }
+      textarea {
+        height: 260px;
+        resize: vertical;
+        line-height: 1.45;
+      }
+      .controls {
+        display: flex;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+      }
+      button {
+        background: linear-gradient(180deg, #7c8cff, #6575ff);
+        border: none;
+        color: white;
+        font-weight: 600;
+        border-radius: 12px;
+        padding: 0.85rem 1.1rem;
+        cursor: pointer;
+        transition: 0.2s transform, 0.2s filter;
+      }
+      button:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.02);
+      }
+      button.secondary {
+        background: var(--glass-strong);
+        color: var(--text);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+      }
+      .meta {
+        font-size: 0.9rem;
+        color: var(--sub);
+        margin-top: 0.6rem;
+      }
+      .preview {
+        height: 360px;
+        background: var(--glass);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 12px;
+        padding: 1rem;
+        white-space: pre-wrap;
+        overflow: auto;
+        font-family: ui-monospace, Consolas, Monaco, monospace;
+      }
+      .footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.25rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(10, 12, 18, 0.7);
+      }
+      .badge {
+        font-size: 0.85rem;
+        color: var(--sub);
+      }
+      @media (max-width: 960px) {
+        .card-inner {
+          grid-template-columns: 1fr;
+        }
+        .preview {
+          height: 260px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg"></div>
+    <div class="bg2"></div>
+
+    <div class="container">
+      <div class="header">
+        <div class="dot"></div>
+        <h1>Journal Markdown Generator</h1>
+      </div>
+
+      <div class="card">
+        <div class="card-inner">
+          <div class="panel">
+            <label>Datum</label>
+            <input type="date" id="dateInput" />
+            <div class="meta" id="fileHint">Datei: –</div>
+            <label>Journal Text</label>
+            <textarea
+              id="textInput"
+              placeholder="z. B. 16.8.2024&#10;Dein Text..."
+            ></textarea>
+            <div class="controls">
+              <button id="downloadBtn">Download .md</button>
+              <button class="secondary" id="copyBtn">In Zwischenablage</button>
+              <button class="secondary" id="clearBtn">Leeren</button>
+            </div>
+          </div>
+          <div class="panel">
+            <label>Vorschau</label>
+            <div id="preview" class="preview"></div>
+          </div>
+        </div>
+        <div class="footer">
+          <div class="badge">Auto-Datum aus erster Zeile wird erkannt</div>
+          <div class="badge" id="status">Bereit</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const dateEl = document.getElementById("dateInput");
+      const textEl = document.getElementById("textInput");
+      const previewEl = document.getElementById("preview");
+      const fileHint = document.getElementById("fileHint");
+      const statusEl = document.getElementById("status");
+      const dlBtn = document.getElementById("downloadBtn");
+      const copyBtn = document.getElementById("copyBtn");
+      const clearBtn = document.getElementById("clearBtn");
+
+      function pad(n) {
+        return String(n).padStart(2, "0");
+      }
+      function toIso(y, m, d) {
+        return `${y}-${pad(m)}-${pad(d)}`;
+      }
+      function isValidDate(y, m, d) {
+        const t = new Date(`${y}-${pad(m)}-${pad(d)}`);
+        return (
+          t &&
+          t.getFullYear() == y &&
+          t.getMonth() + 1 == Number(m) &&
+          t.getDate() == Number(d)
+        );
+      }
+      function parseLeadingDate(t) {
+        const m = t
+          .trimStart()
+          .match(/^(\d{1,2})[.\-\/](\d{1,2})[.\-\/](\d{4})(?:\s|$)/);
+        if (!m) return null;
+        const d = Number(m[1]),
+          mo = Number(m[2]),
+          y = Number(m[3]);
+        if (!isValidDate(y, mo, d)) return null;
+        return { d, mo, y };
+      }
+      function weekdayNumFromISO(dateStr) {
+        const d = new Date(dateStr);
+        let wd = d.getDay();
+        if (wd === 0) wd = 7;
+        return wd;
+      }
+      function build(dd, mm, yyyy, body) {
+        const datePattern = /^(\d{1,2}[.\-\/]\d{1,2}[.\-\/]\d{4})\s*/;
+        let trimmedBody = body;
+        const match = trimmedBody.match(datePattern);
+        if (match) {
+          trimmedBody = trimmedBody.slice(match[0].length).trimStart();
+        }
+        const ddmmyyyy = `${pad(dd)}.${pad(mm)}.${yyyy}`;
+        const iso = `${yyyy}-${pad(mm)}-${pad(dd)}`;
+        const wd = weekdayNumFromISO(iso);
+        const fm = `---
+title: ${ddmmyyyy}
+date: ${iso}
+navigation:
+  icon: i-lucide-notebook-pen
+description: ""
+---
+
+${trimmedBody}
+
+`;
+        const filename = `${wd}.${ddmmyyyy}.md`;
+        return { fm, filename };
+      }
+      function refresh() {
+        let ymd = null;
+        const leading = parseLeadingDate(textEl.value || "");
+        if (leading) {
+          dateEl.value = toIso(leading.y, leading.mo, leading.d);
+        }
+        if (dateEl.value) {
+          const d = new Date(dateEl.value);
+          const dd = d.getDate(),
+            mm = d.getMonth() + 1,
+            yy = d.getFullYear();
+          const res = build(dd, mm, yy, textEl.value);
+          previewEl.textContent = res.fm;
+          fileHint.textContent = `Datei: ${res.filename}`;
+        } else {
+          previewEl.textContent = "";
+          fileHint.textContent = "Datei: –";
+        }
+      }
+      function download() {
+        if (!dateEl.value) {
+          statusEl.textContent = "Bitte Datum setzen";
+          return;
+        }
+        const d = new Date(dateEl.value);
+        const dd = d.getDate(),
+          mm = d.getMonth() + 1,
+          yy = d.getFullYear();
+        const { fm, filename } = build(dd, mm, yy, textEl.value);
+        const blob = new Blob([fm], { type: "text/markdown" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        statusEl.textContent = `Gespeichert: ${filename}`;
+      }
+      function copyToClipboard() {
+        if (!dateEl.value) {
+          statusEl.textContent = "Bitte Datum setzen";
+          return;
+        }
+        const d = new Date(dateEl.value);
+        const dd = d.getDate(),
+          mm = d.getMonth() + 1,
+          yy = d.getFullYear();
+        const { fm } = build(dd, mm, yy, textEl.value);
+        navigator.clipboard.writeText(fm);
+        statusEl.textContent = "In Zwischenablage kopiert";
+      }
+      function clearAll() {
+        textEl.value = "";
+        dateEl.value = "";
+        previewEl.textContent = "";
+        fileHint.textContent = "Datei: –";
+        statusEl.textContent = "Bereit";
+      }
+      textEl.addEventListener("input", refresh);
+      dateEl.addEventListener("input", refresh);
+      dlBtn.addEventListener("click", download);
+      copyBtn.addEventListener("click", copyToClipboard);
+      clearBtn.addEventListener("click", clearAll);
+      refresh();
+    </script>
+    <a
+      href="index.html"
+      style="
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #7c8cff;
+        color: white;
+        padding: 12px 16px;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      "
+    >
+      <span>Zurück</span>
+    </a>
+  </body>
+</html>

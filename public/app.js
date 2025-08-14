@@ -145,4 +145,40 @@ async function init(){
   }
 }
 
+function addWriterButton(){
+  const main=document.querySelector("main");
+  if(!main||main.querySelector(".journal-writer-btn"))return;
+  const a=document.createElement("a");
+  a.href="JournalWriter.html";
+  a.className="journal-writer-btn";
+  a.innerHTML='<i class="fas fa-pen"></i><span>Writer</span>';
+  main.appendChild(a);
+}
+
+async function init(){
+  try{
+    const list=await fetchList();
+    await buildNav(list);
+    document.getElementById("sidebar").addEventListener("click",e=>{
+      const a=e.target.closest("a.file");if(!a)return;
+      e.preventDefault();loadFile(a.dataset.path,a);
+    });
+    const journals=list.filter(p=>p.startsWith("3.Journal/")).sort(byFolderAware);
+    const first=journals[journals.length-1]||list[0];
+    if(!first)return;
+    const a=[...document.querySelectorAll("a.file")].find(x=>x.dataset.path===first);
+    if(a){
+      let d=a.closest("details");while(d){d.setAttribute("open","");d=d.parentElement.closest("details");}
+      await loadFile(first,a);
+    }else{
+      await loadFile(first,null);
+    }
+    addWriterButton();
+  }catch(e){
+    const el=document.getElementById("content");
+    if(el)el.innerHTML=`<p>Fehler beim Initialisieren: ${e.message}</p>`;
+    console.error("init",e);
+  }
+}
+
 init();
