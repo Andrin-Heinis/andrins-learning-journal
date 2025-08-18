@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "gen:index": "node tools/genIndex.js",
     "new:entry": "node tools/newEntry.js",
     "build": "npm run gen:index",
     "push": "sh -c 'git add . && git commit -m \"$1\" && git push' --"
