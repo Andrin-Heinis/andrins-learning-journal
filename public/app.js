@@ -73,7 +73,7 @@ function byFolderAware(a, b) {
 
 async function fetchList() {
   try {
-    const url = `content/index.json?v=${Date.now()}`;
+    const url = `index.json?v=${Date.now()}`;
     const res = await fetch(enc(url), nocache);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
