@@ -1,16 +1,3 @@
-const CURRENT_YEAR_LABEL = "Year 3";
-const YEAR_START = new Date("2025-07-28T00:00:00");
-
-function apprenticeWeek(d, start) {
-  const msPerDay = 86400000;
-  const diff = Math.floor(
-    (Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) -
-      Date.UTC(start.getFullYear(), start.getMonth(), start.getDate())) /
-      msPerDay
-  );
-  return Math.floor(diff / 7) + 1;
-}
-
 const groups = [
   { title: "Classes", icon: "fa-regular fa-calendar", prefix: "1.Classes" },
   { title: "Grades", icon: "fa-solid fa-graduation-cap", prefix: "2.Grades" },
