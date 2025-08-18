@@ -4,7 +4,6 @@
   "type": "module",
   "scripts": {
     "new:entry": "node tools/newEntry.js",
-    "build": "npm run gen:index",
     "push": "sh -c 'git add . && git commit -m \"$1\" && git push' --"
   },
   "dependencies": {}
