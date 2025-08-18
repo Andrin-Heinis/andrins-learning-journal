@@ -5,7 +5,6 @@
   "scripts": {
     "new:entry": "node tools/newEntry.js",
     "build": "echo \"Build skipped - static site\"",
-    "update-index": "node tools/updateIndex.js",
     "push": "sh -c 'git add . && git commit -m \"$*\" && git push' --"
   },
   "dependencies": {}
