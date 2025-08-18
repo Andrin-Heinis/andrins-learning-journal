@@ -254,7 +254,7 @@ async function loadFile(path, a) {
   } catch (e) {
     document.getElementById(
       "content"
-    ).innerHTML = `<p>Fehler beim Laden: <code>${path}</code> – ${e.message}</p>`;
+    ).innerHTML = `<p>Fehler beim Laden: <code>${path}</code> - ${e.message}</p>`;
   }
 }
 
@@ -302,7 +302,7 @@ async function loadWeek(folderPath) {
   } catch (e) {
     document.getElementById(
       "content"
-    ).innerHTML = `<p>Fehler beim Laden der Woche: <code>${folderPath}</code> – ${e.message}</p>`;
+    ).innerHTML = `<p>Fehler beim Laden der Woche: <code>${folderPath}</code> - ${e.message}</p>`;
   }
 }
 

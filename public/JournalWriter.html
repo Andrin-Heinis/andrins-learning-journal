@@ -217,7 +217,7 @@
           <div class="panel">
             <label>Datum</label>
             <input type="date" id="dateInput" />
-            <div class="meta" id="fileHint">Datei: –</div>
+            <div class="meta" id="fileHint">Datei: -</div>
             <label>Journal Text</label>
             <textarea
               id="textInput"
@@ -323,7 +323,7 @@ ${trimmedBody}
           fileHint.textContent = `Datei: ${res.filename}`;
         } else {
           previewEl.textContent = "";
-          fileHint.textContent = "Datei: –";
+          fileHint.textContent = "Datei: -";
         }
       }
       function download() {
@@ -364,7 +364,7 @@ ${trimmedBody}
         textEl.value = "";
         dateEl.value = "";
         previewEl.textContent = "";
-        fileHint.textContent = "Datei: –";
+        fileHint.textContent = "Datei: -";
         statusEl.textContent = "Bereit";
       }
       textEl.addEventListener("input", refresh);
