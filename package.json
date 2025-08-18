@@ -4,7 +4,6 @@
   "type": "module",
   "scripts": {
     "new:entry": "node tools/newEntry.js",
-    "build": "console.log('Build command doing absolute nothing :D')",
     "push": "sh -c 'git add . && git commit -m \"$1\" && git push' --"
   },
   "dependencies": {}
