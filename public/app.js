@@ -70,7 +70,7 @@ function toDDMMYYYY(d) {
 }
 
 function formatDateTitle(s) {
-  const days = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const d = new Date(s);
   if (!isNaN(d)) return `${days[d.getDay()]}, ${toDDMMYYYY(d)}`;
   const m = /^([0-3][0-9])\.([0-1][0-9])\.(\d{4})$/.exec(s.trim());

@@ -289,3 +289,8 @@ button.week:hover .summary-row {
   margin: 20px auto !important;
   max-width: 900px !important;
 }
+img {
+  width: 400px;
+  display: block;
+  margin: 10px auto;
+}
