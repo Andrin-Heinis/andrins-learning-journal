@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "new:entry": "node tools/newEntry.js",
-    "build": "echo \"Build skipped – static site\"",
+    "build": "echo \"Build skipped - static site\"",
     "push": "sh -c 'git add . && git commit -m \"$*\" && git push' --"
   },
   "dependencies": {}
