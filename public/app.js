@@ -1,3 +1,6 @@
+import fs from "fs";
+import path from "path";
+
 const groups = [
   { title: "Classes", icon: "fa-regular fa-calendar", prefix: "1.Classes" },
   { title: "Grades", icon: "fa-solid fa-graduation-cap", prefix: "2.Grades" },
