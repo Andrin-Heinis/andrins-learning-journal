@@ -2,47 +2,188 @@
 <html lang="de">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Home</title>
     <style>
+      :root {
+        --bg: #000;
+        --fg: #fff;
+        --muted: rgba(255, 255, 255, 0.6);
+        --mx: 50vw;
+        --my: 50vh;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
       body {
-        font-family: Arial, sans-serif;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
+        height: 100%;
+      }
+      body {
         margin: 0;
-        background: #f4f4f4;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+          Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+        color: var(--fg);
+        background: radial-gradient(
+            700px at var(--mx) var(--my),
+            rgba(255, 255, 255, 0.08),
+            transparent 60%
+          ),
+          radial-gradient(
+            1200px at 20% -10%,
+            rgba(255, 255, 255, 0.06),
+            transparent 60%
+          ),
+          radial-gradient(
+            900px at 110% 120%,
+            rgba(255, 255, 255, 0.05),
+            transparent 60%
+          ),
+          #000;
+        background-attachment: fixed;
+      }
+      .vignette::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(
+          1200px at 50% 30%,
+          transparent 0,
+          rgba(0, 0, 0, 0.2) 70%,
+          rgba(0, 0, 0, 0.6) 100%
+        );
+        mix-blend-mode: multiply;
+      }
+      .grain::after {
+        content: "";
+        position: fixed;
+        inset: -50vmax;
+        pointer-events: none;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23n)" opacity="0.045"/></svg>');
+        background-size: 160px 160px;
+        animation: g 6s steps(6) infinite;
+        opacity: 0.7;
+      }
+      @keyframes g {
+        to {
+          transform: translate3d(-160px, -160px, 0);
+        }
+      }
+
+      .wrap {
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: 6vh 20px;
       }
       .container {
+        width: min(720px, 100%);
         text-align: center;
       }
       h1 {
-        margin-bottom: 30px;
+        font-size: clamp(32px, 6vw, 40px);
+        letter-spacing: 0.02em;
+        line-height: 1.05;
+        margin: 0 0 10px;
+        margin-bottom: 5%;
+      }
+      p.lead {
+        margin: 0 0 28px;
+        color: var(--muted);
+        font-size: clamp(14px, 2.4vw, 18px);
+      }
+      #links {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 14px;
       }
       .btn {
-        display: block;
-        width: 250px;
-        padding: 15px;
-        margin: 10px auto;
-        font-size: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 35%;
+        padding: 14px 18px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.06),
+          rgba(255, 255, 255, 0.02)
+        );
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        color: var(--fg);
         text-decoration: none;
-        color: white;
-        background: #007bff;
-        border-radius: 8px;
-        transition: background 0.2s;
+        font-size: 16px;
+        letter-spacing: 0.02em;
+        transition: transform 0.08s ease, border-color 0.2s ease,
+          background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset,
+          0 10px 30px rgba(0, 0, 0, 0.4);
       }
       .btn:hover {
-        background: #0056b3;
+        transform: translateY(-2px);
+        border-color: rgba(255, 255, 255, 0.35);
+        background: rgba(255, 255, 255, 0.96);
+        color: #000;
+        box-shadow: 0 8px 40px rgba(255, 255, 255, 0.1);
+      }
+      .btn:active {
+        transform: translateY(0);
+      }
+
+      .footer {
+        margin-top: 28px;
+        color: var(--muted);
+        font-size: 12px;
+        opacity: 0.8;
+      }
+      .credit-fixed {
+        position: fixed;
+        bottom: 8px;
+        right: 12px;
+        font-size: 12px;
+        color: var(--muted);
+        opacity: 0.8;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .grain::after {
+          animation: none;
+        }
       }
     </style>
   </head>
   <body>
-    <div class="container">
-      <h1>Willkommen</h1>
-      <div id="links"></div>
-    </div>
+    <div class="vignette grain"></div>
+    <main class="wrap">
+      <div class="container">
+        <h1>Andrin's Learning Journal</h1>
+        <div id="links"></div>
+        <div class="footer"></div>
+      </div>
+    </main>
+    <div class="credit-fixed">Design made by ChatGPT :D</div>
 
     <script>
+      const y = document.getElementById("year");
+      if (y) y.textContent = new Date().getFullYear();
+
+      const setPos = (e) => {
+        const x =
+          e.clientX ||
+          (e.touches && e.touches[0] && e.touches[0].clientX) ||
+          innerWidth / 2;
+        const y =
+          e.clientY ||
+          (e.touches && e.touches[0] && e.touches[0].clientY) ||
+          innerHeight / 2;
+        document.documentElement.style.setProperty("--mx", x + "px");
+        document.documentElement.style.setProperty("--my", y + "px");
+      };
+      window.addEventListener("pointermove", setPos, { passive: true });
+      window.addEventListener("touchmove", setPos, { passive: true });
+
       (async () => {
         try {
           const res = await fetch("content/lastFile.json?v=" + Date.now(), {
@@ -50,16 +191,12 @@
           });
           if (!res.ok) throw new Error("HTTP " + res.status);
           const json = await res.json();
-
-          // dein JSON kann als Array mit einem Objekt kommen oder direkt als Objekt
           const files = Array.isArray(json) ? json[0] : json;
-
           const map = [
             ["journal", "Last Entry"],
             ["grades", "Grades"],
             ["classes", "Classes"],
           ];
-
           const box = document.getElementById("links");
           box.innerHTML = "";
           for (const [key, label] of map) {
@@ -70,10 +207,23 @@
             a.textContent = label;
             box.appendChild(a);
           }
+          if (!box.children.length) {
+            const a = document.createElement("a");
+            a.className = "btn";
+            a.href = "#";
+            a.textContent = "Keine Daten gefunden";
+            box.appendChild(a);
+          }
         } catch (e) {
-          console.error("lastFile.json laden fehlgeschlagen:", e);
           const box = document.getElementById("links");
-          if (box) box.innerHTML = "<p>Konnte Buttons nicht laden.</p>";
+          if (box) {
+            const a = document.createElement("a");
+            a.className = "btn";
+            a.href = "#";
+            a.textContent = "Konnte Buttons nicht laden";
+            box.appendChild(a);
+          }
+          console.error(e);
         }
       })();
     </script>
