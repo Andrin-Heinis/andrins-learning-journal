@@ -299,19 +299,26 @@ async function init() {
     await buildNav(list);
 
     function openParents(path) {
-      const a = [...document.querySelectorAll("a.file")].find(
-        (x) => x.dataset.path === path
-      );
+      const a = [...document.querySelectorAll("a.file")].find(x => x.dataset.path === path);
       if (a) {
         let d = a.closest("details");
-        while (d) {
-          d.open = true;
-          d = d.parentElement.closest("details");
-        }
+        while (d) { d.open = true; d = d.parentElement.closest("details"); }
       }
       return a || null;
     }
 
+    // Sidebar-Listener IMMER registrieren
+    document.getElementById("sidebar").addEventListener("click", (e) => {
+      const caret = e.target.closest("button.caret");
+      if (caret) { e.preventDefault(); const details = caret.closest("details"); if (details) details.open = !details.open; return; }
+      const week = e.target.closest("button.week-label");
+      if (week && week.dataset.path) { e.preventDefault(); loadWeek(week.dataset.path); return; }
+      const a = e.target.closest("a.file");
+      if (a) { e.preventDefault(); loadFile(a.dataset.path, a); }
+    });
+
+    // Deep-Links
+    let handled = false;
     const params = new URLSearchParams(location.search);
     const fileParam = params.get("file");
     const view = params.get("view");
@@ -320,74 +327,31 @@ async function init() {
       const clean = decodeURIComponent(fileParam).replace(/^content\//, "");
       const a = openParents(clean);
       await loadFile(clean, a);
-      return;
-    }
-
-    if (view === "last") {
-      const all = list.filter((p) => p.endsWith(".md")).sort(byFolderAware);
-      const last = all[all.length - 1];
-      if (last) {
-        const a = openParents(last);
-        await loadFile(last, a);
-        return;
-      }
-    }
-
-    if (view === "grades" || view === "classes") {
+      handled = true;
+    } else if (view === "last") {
+      const all = list.filter(p => p.endsWith(".md")).sort(byFolderAware);
+      const last = all.at(-1);
+      if (last) { const a = openParents(last); await loadFile(last, a); handled = true; }
+    } else if (view === "grades" || view === "classes") {
       const prefix = view === "grades" ? "2.Grades" : "1.Classes";
-      const listInSection = list
-        .filter((p) => p.startsWith(prefix + "/") && p.endsWith(".md"))
-        .sort(byFolderAware);
-      const target = listInSection.at(-1);
-      if (target) {
-        const a = openParents(target);
-        await loadFile(target, a);
-        return;
-      }
+      const section = list.filter(p => p.startsWith(prefix + "/") && p.endsWith(".md")).sort(byFolderAware);
+      const target = section.at(-1);
+      if (target) { const a = openParents(target); await loadFile(target, a); handled = true; }
     }
 
-    document.getElementById("sidebar").addEventListener("click", (e) => {
-      const caret = e.target.closest("button.caret");
-      if (caret) {
-        e.preventDefault();
-        const details = caret.closest("details");
-        if (details) details.open = !details.open;
-        return;
+    // Fallback (nur wenn nichts per Deep-Link geladen wurde)
+    if (!handled) {
+      const weeks = list.filter(p => p.startsWith("3.Journal/") && /\/Week\s*\d+$/i.test(p));
+      if (weeks.length) {
+        const latest = weeks.sort(byFolderAware).at(-1);
+        await loadWeek(latest);
+        const btn = [...document.querySelectorAll("button.week-label")].find(x => x.dataset.path === latest);
+        if (btn) { let d = btn.closest("details"); while (d) { d.setAttribute("open",""); d = d.parentElement.closest("details"); } }
+      } else {
+        const journals = list.filter(p => p.startsWith("3.Journal/")).sort(byFolderAware);
+        const first = journals.at(-1) || list[0];
+        if (first) await loadFile(first, null);
       }
-      const week = e.target.closest("button.week-label");
-      if (week && week.dataset.path) {
-        e.preventDefault();
-        loadWeek(week.dataset.path);
-        return;
-      }
-      const a = e.target.closest("a.file");
-      if (a) {
-        e.preventDefault();
-        loadFile(a.dataset.path, a);
-      }
-    });
-    const weeks = list.filter(
-      (p) => p.startsWith("3.Journal/") && /\/Week\s*\d+$/i.test(p)
-    );
-    if (weeks.length) {
-      const latest = weeks.sort(byFolderAware)[weeks.length - 1];
-      await loadWeek(latest);
-      const btn = [...document.querySelectorAll("button.week-label")].find(
-        (x) => x.dataset.path === latest
-      );
-      if (btn) {
-        let d = btn.closest("details");
-        while (d) {
-          d.setAttribute("open", "");
-          d = d.parentElement.closest("details");
-        }
-      }
-    } else {
-      const journals = list
-        .filter((p) => p.startsWith("3.Journal/"))
-        .sort(byFolderAware);
-      const first = journals[journals.length - 1] || list[0];
-      if (first) await loadFile(first, null);
     }
   } catch (e) {
     const el = document.getElementById("content");
