@@ -6,3 +6,9 @@
 
 # Ignore Idea settings
 .idea/
+
+# Ignore Python cache files
+__pycache__/
+
+# Ignore Python scrip
+scripts/*
