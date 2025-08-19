@@ -297,6 +297,55 @@ async function init() {
   try {
     const list = await fetchList();
     await buildNav(list);
+
+    function openParents(path) {
+      const a = [...document.querySelectorAll("a.file")].find(
+        (x) => x.dataset.path === path
+      );
+      if (a) {
+        let d = a.closest("details");
+        while (d) {
+          d.open = true;
+          d = d.parentElement.closest("details");
+        }
+      }
+      return a || null;
+    }
+
+    const params = new URLSearchParams(location.search);
+    const fileParam = params.get("file");
+    const view = params.get("view");
+
+    if (fileParam) {
+      const clean = decodeURIComponent(fileParam).replace(/^content\//, "");
+      const a = openParents(clean);
+      await loadFile(clean, a);
+      return;
+    }
+
+    if (view === "last") {
+      const all = list.filter((p) => p.endsWith(".md")).sort(byFolderAware);
+      const last = all[all.length - 1];
+      if (last) {
+        const a = openParents(last);
+        await loadFile(last, a);
+        return;
+      }
+    }
+
+    if (view === "grades" || view === "classes") {
+      const prefix = view === "grades" ? "2.Grades" : "1.Classes";
+      const listInSection = list
+        .filter((p) => p.startsWith(prefix + "/") && p.endsWith(".md"))
+        .sort(byFolderAware);
+      const target = listInSection.at(-1);
+      if (target) {
+        const a = openParents(target);
+        await loadFile(target, a);
+        return;
+      }
+    }
+
     document.getElementById("sidebar").addEventListener("click", (e) => {
       const caret = e.target.closest("button.caret");
       if (caret) {

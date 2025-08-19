@@ -2,24 +2,80 @@
 <html lang="de">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Learning Journal</title>
-    <link rel="stylesheet" href="style.css" />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-    />
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <title>Home</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background: #f4f4f4;
+      }
+      .container {
+        text-align: center;
+      }
+      h1 {
+        margin-bottom: 30px;
+      }
+      .btn {
+        display: block;
+        width: 250px;
+        padding: 15px;
+        margin: 10px auto;
+        font-size: 16px;
+        text-decoration: none;
+        color: white;
+        background: #007bff;
+        border-radius: 8px;
+        transition: background 0.2s;
+      }
+      .btn:hover {
+        background: #0056b3;
+      }
+    </style>
   </head>
   <body>
-    <header><h1>Learning Journal</h1></header>
-    <div class="wrapper">
-      <nav id="sidebar"></nav>
-      <main><div id="content"></div></main>
+    <div class="container">
+      <h1>Willkommen</h1>
+      <div id="links"></div>
     </div>
-    <a href="JournalWriter.html" class="journal-writer-btn">
-      <i class="fas fa-pen"></i> Writer
-    </a>
-    <script src="app.js"></script>
+
+    <script>
+      (async () => {
+        try {
+          const res = await fetch("content/lastFile.json?v=" + Date.now(), {
+            cache: "no-store",
+          });
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const json = await res.json();
+
+          // dein JSON kann als Array mit einem Objekt kommen oder direkt als Objekt
+          const files = Array.isArray(json) ? json[0] : json;
+
+          const map = [
+            ["journal", "Last Entry"],
+            ["grades", "Grades"],
+            ["classes", "Classes"],
+          ];
+
+          const box = document.getElementById("links");
+          box.innerHTML = "";
+          for (const [key, label] of map) {
+            if (!files[key]) continue;
+            const a = document.createElement("a");
+            a.className = "btn";
+            a.href = "journal.html?file=" + encodeURIComponent(files[key]);
+            a.textContent = label;
+            box.appendChild(a);
+          }
+        } catch (e) {
+          console.error("lastFile.json laden fehlgeschlagen:", e);
+          const box = document.getElementById("links");
+          if (box) box.innerHTML = "<p>Konnte Buttons nicht laden.</p>";
+        }
+      })();
+    </script>
   </body>
 </html>
