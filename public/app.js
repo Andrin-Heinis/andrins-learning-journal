@@ -407,9 +407,11 @@ async function loadFile(path, a) {
 
     card.append(head, div);
     wrap.appendChild(card);
-    document.getElementById("content").innerHTML = wrap.innerHTML;
 
-    // Nach Rendern Aggregatszustände sicherstellen
+    const container = document.getElementById("content");
+    container.innerHTML = "";
+    container.appendChild(wrap);
+
     refreshAggregateMarks();
   } catch (e) {
     document.getElementById(
