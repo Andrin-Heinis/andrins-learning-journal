@@ -46,7 +46,7 @@ header::before{
 }
 .wrapper{
   display:grid;
-  grid-template-columns:300px 1fr;
+  grid-template-columns:320px 1fr;
   height:calc(100% - 64px);
 }
 nav#sidebar{
@@ -368,3 +368,16 @@ details[open] > summary > .week-row > .caret i {
 }
 
 .tree a.file:hover { text-decoration: none; background: var(--hover); }
+.mark i{font-size:12px}
+.file .mark{margin-left:6px}
+.week-row .mark{margin-left:6px}
+.entry-card .entry-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.entry-card .entry-head h2{margin:0;flex:1}
+.mark{all:unset;cursor:pointer;display:inline-grid;place-items:center;width:28px;height:28px;border-radius:8px;border:1px solid rgba(255,255,255,.16)}
+.mark.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.mark:hover{background:rgba(255,255,255,.06)}
+.mark.partial{
+  background:#3f3f46;
+  border-color:#3f3f46;
+  color:#fff;
+}

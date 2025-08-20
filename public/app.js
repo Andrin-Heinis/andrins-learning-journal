@@ -5,13 +5,151 @@ const groups = [
 ];
 
 const nocache = { cache: "no-store", headers: { "Cache-Control": "no-store" } };
+const DONE_KEY = "lj_done";
 
+/* -------- LocalStorage Helpers -------- */
+function doneSet() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(DONE_KEY) || "[]"));
+  } catch {
+    return new Set();
+  }
+}
+function saveDone(set) {
+  localStorage.setItem(DONE_KEY, JSON.stringify([...set]));
+}
+function isDone(id) {
+  return doneSet().has(id);
+}
+
+/* -------- Mark UI helpers (tri-state) -------- */
+function setMarkIcon(btn, state) {
+  // state: 'on' | 'off' | 'partial'
+  btn.classList.toggle("on", state === "on");
+  btn.classList.toggle("partial", state === "partial");
+  btn.innerHTML =
+    state === "partial"
+      ? '<i class="fa-solid fa-minus"></i>'
+      : '<i class="fa-solid fa-check"></i>';
+}
+
+function refreshAggregateMarks() {
+  const set = doneSet();
+
+  // Files -> rein aus Storage ableiten
+  document.querySelectorAll('button.mark[data-id^="F:"]').forEach((btn) => {
+    const id = btn.dataset.id;
+    setMarkIcon(btn, set.has(id) ? "on" : "off");
+  });
+
+  // Weeks -> Status aus Kinder-Dateien berechnen
+  document.querySelectorAll('button.mark[data-id^="W:"]').forEach((btn) => {
+    const folder = btn.dataset.id.slice(2);
+    const files = [
+      ...document.querySelectorAll(`button.mark[data-id^="F:${folder}/"]`),
+    ];
+    const total = files.length;
+    const done = files.filter((b) => b.classList.contains("on")).length;
+
+    let state = "off";
+    if (total > 0) {
+      if (done === 0) state = "off";
+      else if (done === total) state = "on";
+      else state = "partial";
+    }
+    setMarkIcon(btn, state);
+  });
+
+  // Years -> Status aus allen Dateien unter dem Jahr berechnen
+  document.querySelectorAll('button.mark[data-id^="Y:"]').forEach((btn) => {
+    const folder = btn.dataset.id.slice(2);
+    const files = [
+      ...document.querySelectorAll(`button.mark[data-id^="F:${folder}/"]`),
+    ];
+    const total = files.length;
+    const done = files.filter((b) => b.classList.contains("on")).length;
+
+    let state = "off";
+    if (total > 0) {
+      if (done === 0) state = "off";
+      else if (done === total) state = "on";
+      else state = "partial";
+    }
+    setMarkIcon(btn, state);
+  });
+}
+
+/* -------- Mark Button Factory -------- */
+function makeMark(id) {
+  const b = document.createElement("button");
+  b.className = "mark";
+  b.dataset.id = id;
+
+  // Initialzustand
+  if (id.startsWith("F:")) setMarkIcon(b, isDone(id) ? "on" : "off");
+  else setMarkIcon(b, "off"); // Week/Year werden via refreshAggregateMarks gesetzt
+
+  b.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const set = doneSet();
+
+    // Klick auf Woche / Jahr -> alle Dateien darunter setzen/löschen
+    if (id.startsWith("W:") || id.startsWith("Y:")) {
+      const folder = id.slice(2); // z.B. '3.Journal/Year 3' oder '3.Journal/Year 3/Week 4'
+      const fileIds = [
+        ...document.querySelectorAll(`a.file[data-path^="${folder}/"]`),
+      ].map((a) => "F:" + a.dataset.path);
+      const turnOn = !set.has(id);
+
+      if (turnOn) {
+        set.add(id);
+        fileIds.forEach((x) => set.add(x));
+      } else {
+        set.delete(id);
+        fileIds.forEach((x) => set.delete(x));
+      }
+      saveDone(set);
+
+      // Direkt betroffene Marks updaten (Sidebar + Content)
+      document.querySelectorAll("button.mark").forEach((m) => {
+        const mid = m.dataset.id;
+        if (mid === id || fileIds.includes(mid)) {
+          setMarkIcon(m, set.has(mid) ? "on" : "off");
+        }
+      });
+
+      // Aggregatszustände (Minus etc.) neu berechnen
+      refreshAggregateMarks();
+      return;
+    }
+
+    // Klick auf Datei
+    if (id.startsWith("F:")) {
+      if (set.has(id)) set.delete(id);
+      else set.add(id);
+      saveDone(set);
+
+      // Alle Instanzen dieser Datei spiegeln (Sidebar + Content)
+      document.querySelectorAll(`button.mark[data-id="${id}"]`).forEach((m) => {
+        setMarkIcon(m, set.has(id) ? "on" : "off");
+      });
+
+      // Aggregatszustände neu berechnen
+      refreshAggregateMarks();
+    }
+  });
+
+  return b;
+}
+
+/* -------- Path & Tree helpers -------- */
 const enc = (p) => {
   const [path, query] = p.split("?");
   const encoded = path.split("/").map(encodeURIComponent).join("/");
   return query ? `${encoded}?${query}` : encoded;
 };
-
 const parts = (p) => p.split("/").filter(Boolean);
 
 function buildTree(paths) {
@@ -58,6 +196,7 @@ function byFolderAware(a, b) {
   return a.localeCompare(b, undefined, { numeric: true });
 }
 
+/* -------- Data fetch -------- */
 async function fetchList() {
   try {
     const url = `content/index.json?v=${Date.now()}`;
@@ -72,13 +211,13 @@ async function fetchList() {
   }
 }
 
+/* -------- Markdown helpers -------- */
 function toDDMMYYYY(d) {
   const dd = String(d.getDate()).padStart(2, "0");
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   const yyyy = d.getFullYear();
   return `${dd}.${mm}.${yyyy}`;
 }
-
 function formatDateTitle(s) {
   const days = [
     "Sunday",
@@ -98,7 +237,6 @@ function formatDateTitle(s) {
   }
   return s;
 }
-
 function parseFrontmatter(md) {
   const m = /^---\s*([\s\S]*?)\s*---\s*/.exec(md);
   if (!m) return { meta: {}, body: md };
@@ -111,6 +249,7 @@ function parseFrontmatter(md) {
   return { meta, body };
 }
 
+/* -------- Sidebar tree -------- */
 function makeSummaryRow(text, icon) {
   const row = document.createElement("div");
   row.className = "summary-row";
@@ -127,59 +266,76 @@ function renderTree(node, base) {
   const ul = document.createElement("ul");
   ul.className = "tree";
   const keys = Object.keys(node).sort(byFolderAware);
+
   for (const key of keys) {
     const li = document.createElement("li");
     const data = node[key];
+
     if (data._file) {
       const a = document.createElement("a");
       a.href = "#";
       a.className = "file";
       a.dataset.path = `${base}/${key}`;
+
       const ic = document.createElement("i");
       ic.className = "icon fa-regular fa-note-sticky";
       const tt = document.createElement("span");
       tt.textContent = titleFrom(key);
-      a.append(ic, tt);
+
+      a.append(ic, tt, makeMark("F:" + base + "/" + key));
       li.appendChild(a);
     } else {
       const det = document.createElement("details");
       const sum = document.createElement("summary");
       const row = document.createElement("div");
       row.className = "week-row";
+
       const caret = document.createElement("button");
       caret.type = "button";
       caret.className = "caret";
       const chevr = document.createElement("i");
       chevr.className = "fa-solid fa-chevron-down";
       caret.append(chevr);
+
       const isWeek = /^week/i.test(key);
       if (isWeek) {
         const labelBtn = document.createElement("button");
         labelBtn.type = "button";
         labelBtn.className = "week-label";
         labelBtn.dataset.path = `${base}/${key}`;
+
         const ic = document.createElement("i");
         ic.className = `icon ${iconFor(key, false)}`;
         const label = document.createElement("span");
         label.textContent = key;
+
         labelBtn.append(ic, label);
-        row.append(caret, labelBtn);
+        row.append(caret, labelBtn, makeMark("W:" + base + "/" + key));
       } else {
         const rowLabel = document.createElement("button");
         rowLabel.type = "button";
         rowLabel.className = "week-label";
         rowLabel.dataset.folder = `${base}/${key}`;
+
         const ic = document.createElement("i");
         ic.className = `icon ${iconFor(key, false)}`;
         const label = document.createElement("span");
         label.textContent = key;
-        row.append(caret, ic, label);
+
+        row.append(
+          caret,
+          ic,
+          label,
+          makeMark((/^year/i.test(key) ? "Y:" : "D:") + base + "/" + key)
+        );
       }
+
       sum.append(row);
       det.append(sum);
       det.append(renderTree(data._children, `${base}/${key}`));
       li.appendChild(det);
     }
+
     ul.appendChild(li);
   }
   return ul;
@@ -194,6 +350,7 @@ async function buildNav(list) {
     title.className = "group-title";
     title.innerHTML = `<i class="${group.icon}" style="margin-right:8px;color:#9aa3b3"></i>${group.title}`;
     box.appendChild(title);
+
     const subset = list
       .filter((p) => p.startsWith(group.prefix + "/"))
       .map((p) => p.replace(group.prefix + "/", ""));
@@ -205,6 +362,7 @@ async function buildNav(list) {
   }
 }
 
+/* -------- Content area -------- */
 function setActive(a) {
   document
     .querySelectorAll(".file.active")
@@ -221,9 +379,17 @@ async function loadFile(path, a) {
     const md = await res.text();
     const { meta, body } = parseFrontmatter(md);
     const html = marked.parse(body);
+
     const wrap = document.createElement("div");
     const card = document.createElement("article");
     card.className = "entry-card";
+
+    const head = document.createElement("div");
+    head.style.display = "flex";
+    head.style.alignItems = "center";
+    head.style.justifyContent = "space-between";
+    head.style.gap = "12px";
+
     const h2 = document.createElement("h2");
     const title = meta.date
       ? formatDateTitle(meta.date)
@@ -231,13 +397,20 @@ async function loadFile(path, a) {
       ? formatDateTitle(meta.title)
       : "";
     h2.textContent = title || "";
+    head.append(h2, makeMark("F:" + path));
+
     const div = document.createElement("div");
     div.innerHTML = html;
-    if (div.firstElementChild && /^H1$/i.test(div.firstElementChild.tagName))
+    if (div.firstElementChild && /^H1$/i.test(div.firstElementChild.tagName)) {
       div.removeChild(div.firstElementChild);
-    card.append(h2, div);
+    }
+
+    card.append(head, div);
     wrap.appendChild(card);
     document.getElementById("content").innerHTML = wrap.innerHTML;
+
+    // Nach Rendern Aggregatszustände sicherstellen
+    refreshAggregateMarks();
   } catch (e) {
     document.getElementById(
       "content"
@@ -252,6 +425,7 @@ async function loadWeek(folderPath) {
     const files = list
       .filter((p) => p.startsWith(folderPath + "/") && p.endsWith(".md"))
       .sort(byFolderAware);
+
     const entries = await Promise.all(
       files.map(async (p) => {
         const res = await fetch(
@@ -266,26 +440,43 @@ async function loadWeek(folderPath) {
           date || p.split("/").pop().replace(".md", "")
         );
         const html = marked.parse(body);
-        return { title, html, date };
+        return { title, html, date, path: p };
       })
     );
+
     entries.sort((a, b) => new Date(a.date) - new Date(b.date));
+
     const content = document.getElementById("content");
     content.innerHTML = "";
+
     const h1 = document.createElement("h1");
     h1.className = "week-title";
     h1.textContent = folderPath.split("/").slice(-2).join(" - ");
     content.appendChild(h1);
+
     for (const e of entries) {
       const card = document.createElement("article");
       card.className = "entry-card";
+
+      const head = document.createElement("div");
+      head.style.display = "flex";
+      head.style.alignItems = "center";
+      head.style.justifyContent = "space-between";
+      head.style.gap = "12px";
+
       const h2 = document.createElement("h2");
       h2.textContent = e.title;
+      head.append(h2, makeMark("F:" + e.path));
+
       const div = document.createElement("div");
       div.innerHTML = e.html;
-      card.append(h2, div);
+
+      card.append(head, div);
       content.appendChild(card);
     }
+
+    // Nach Rendern Aggregatszustände sicherstellen
+    refreshAggregateMarks();
   } catch (e) {
     document.getElementById(
       "content"
@@ -293,29 +484,36 @@ async function loadWeek(folderPath) {
   }
 }
 
+/* -------- App init -------- */
 async function init() {
   try {
     const list = await fetchList();
     await buildNav(list);
 
-    function openParents(path) {
-      const a = [...document.querySelectorAll("a.file")].find(x => x.dataset.path === path);
-      if (a) {
-        let d = a.closest("details");
-        while (d) { d.open = true; d = d.parentElement.closest("details"); }
-      }
-      return a || null;
-    }
-
-    // Sidebar-Listener IMMER registrieren
+    // Sidebar Click Handling
     document.getElementById("sidebar").addEventListener("click", (e) => {
       const caret = e.target.closest("button.caret");
-      if (caret) { e.preventDefault(); const details = caret.closest("details"); if (details) details.open = !details.open; return; }
+      if (caret) {
+        e.preventDefault();
+        const details = caret.closest("details");
+        if (details) details.open = !details.open;
+        return;
+      }
       const week = e.target.closest("button.week-label");
-      if (week && week.dataset.path) { e.preventDefault(); loadWeek(week.dataset.path); return; }
+      if (week && week.dataset.path) {
+        e.preventDefault();
+        loadWeek(week.dataset.path);
+        return;
+      }
       const a = e.target.closest("a.file");
-      if (a) { e.preventDefault(); loadFile(a.dataset.path, a); }
+      if (a) {
+        e.preventDefault();
+        loadFile(a.dataset.path, a);
+      }
     });
+
+    // Nach Aufbau der Sidebar aggregierte Marks berechnen
+    refreshAggregateMarks();
 
     // Deep-Links
     let handled = false;
@@ -323,32 +521,68 @@ async function init() {
     const fileParam = params.get("file");
     const view = params.get("view");
 
+    function openParents(path) {
+      const a = [...document.querySelectorAll("a.file")].find(
+        (x) => x.dataset.path === path
+      );
+      if (a) {
+        let d = a.closest("details");
+        while (d) {
+          d.open = true;
+          d = d.parentElement.closest("details");
+        }
+      }
+      return a || null;
+    }
+
     if (fileParam) {
       const clean = decodeURIComponent(fileParam).replace(/^content\//, "");
       const a = openParents(clean);
       await loadFile(clean, a);
       handled = true;
     } else if (view === "last") {
-      const all = list.filter(p => p.endsWith(".md")).sort(byFolderAware);
+      const all = list.filter((p) => p.endsWith(".md")).sort(byFolderAware);
       const last = all.at(-1);
-      if (last) { const a = openParents(last); await loadFile(last, a); handled = true; }
+      if (last) {
+        const a = openParents(last);
+        await loadFile(last, a);
+        handled = true;
+      }
     } else if (view === "grades" || view === "classes") {
       const prefix = view === "grades" ? "2.Grades" : "1.Classes";
-      const section = list.filter(p => p.startsWith(prefix + "/") && p.endsWith(".md")).sort(byFolderAware);
+      const section = list
+        .filter((p) => p.startsWith(prefix + "/") && p.endsWith(".md"))
+        .sort(byFolderAware);
       const target = section.at(-1);
-      if (target) { const a = openParents(target); await loadFile(target, a); handled = true; }
+      if (target) {
+        const a = openParents(target);
+        await loadFile(target, a);
+        handled = true;
+      }
     }
 
-    // Fallback (nur wenn nichts per Deep-Link geladen wurde)
+    // Fallback
     if (!handled) {
-      const weeks = list.filter(p => p.startsWith("3.Journal/") && /\/Week\s*\d+$/i.test(p));
+      const weeks = list.filter(
+        (p) => p.startsWith("3.Journal/") && /\/Week\s*\d+$/i.test(p)
+      );
       if (weeks.length) {
         const latest = weeks.sort(byFolderAware).at(-1);
         await loadWeek(latest);
-        const btn = [...document.querySelectorAll("button.week-label")].find(x => x.dataset.path === latest);
-        if (btn) { let d = btn.closest("details"); while (d) { d.setAttribute("open",""); d = d.parentElement.closest("details"); } }
+        const btn = [...document.querySelectorAll("button.week-label")].find(
+          (x) => x.dataset.path === latest
+        );
+        if (btn) {
+          let d = btn.closest("details");
+          while (d) {
+            d.setAttribute("open", "");
+            d = d.parentElement.closest("details");
+          }
+        }
       } else {
-        const journals = list.filter(p => p.startsWith("3.Journal/")).sort(byFolderAware);
+        const journals = list
+          .filter((p) => p.startsWith("3.Journal/"))
+          .sort(byFolderAware);
         const first = journals.at(-1) || list[0];
         if (first) await loadFile(first, null);
       }
