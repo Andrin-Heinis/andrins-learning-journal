@@ -1,0 +1,84 @@
+.introjs-tooltip {
+	background: linear-gradient(180deg,rgba(255, 255, 255, 0.08),rgba(255, 255, 255, 0.02)) !important;
+	backdrop-filter: blur(10px) !important;
+	-webkit-backdrop-filter: blur(10px) !important;
+	border: 1px solid rgba(255, 255, 255, 0.14) !important;
+	border-radius: 16px !important;
+	box-shadow: 0 10px 40px rgba(0, 0, 0, 0.55),0 1px 0 rgba(255, 255, 255, 0.06) inset !important;
+	color: #fff !important;
+}
+.introjs-tooltiptext {
+	color: #fff !important;
+	font-size: 16px;
+	line-height: 1.5;
+}
+.introjs-prevbutton {
+	background: rgba(255, 255, 255, 0.16) !important;
+	color: #fff !important;
+}
+.introjs-disabled {
+	opacity: 0.45 !important;
+}
+.introjs-arrow {
+	display: none !important;
+}
+.introjs-bullets {
+	display: none !important;
+}
+.introjs-progress {
+	height: 4px !important;
+	background: rgba(255, 255, 255, 0.12) !important;
+	border-radius: 999px !important;
+	overflow: hidden !important;
+}
+.introjs-progressbar {
+	background: #fff !important;
+}
+.introjs-helperLayer,.introjs-tooltipReferenceLayer {
+	box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6) !important;
+	border-radius: 14px !important;
+}
+.introjs-tooltipbuttons {
+	border-top: none !important;
+	margin-top: 0 !important;
+	padding-top: 8px !important;
+	/* kleiner Abstand reicht */
+}
+.introjs-tooltip-header {
+	display: none !important;
+}
+.introjs-tooltip {
+	padding: 14px 16px 12px !important;
+	min-height: auto !important;
+}
+.introjs-tooltiptext,.introjs-tooltiptext p {
+	margin: 0 !important;
+	padding: 0 !important;
+	line-height: 1.45;
+}
+.introjs-tooltipbuttons {
+	display: flex !important;
+	gap: 10px !important;
+	justify-content: flex-end !important;
+	border-top: none !important;
+	margin: 8px 0 0 !important;
+	padding: 0 !important;
+}
+.introjs-button {
+	border-radius: 12px !important;
+	border: 1px solid rgba(255, 255, 255, 0.18) !important;
+	background: rgba(255, 255, 255, 0.92) !important;
+	color: #000 !important;
+	padding: 8px 12px !important;
+	font-weight: 600 !important;
+}
+.introjs-prevbutton {
+	background: rgba(255, 255, 255, 0.16) !important;
+	color: #fff !important;
+}
+.introjs-disabled {
+	opacity: 0.45 !important;
+}
+.introjs-arrow {
+	display: none !important;
+}
