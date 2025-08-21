@@ -580,7 +580,6 @@ summary::-webkit-details-marker {
 summary::-webkit-details-marker {
   display: none;
 }
-
 button.caret {
   all: unset;
   cursor: pointer;
@@ -591,11 +590,9 @@ button.caret {
   border-radius: 8px;
   color: #cfd6e3;
 }
-
 button.caret:hover {
   background: var(--hover);
 }
-
 button.caret i {
   transition: transform 0.18s ease;
 }
@@ -657,4 +654,16 @@ details[open] > summary > .week-row > .caret i {
   background: #3f3f46;
   border-color: #3f3f46;
   color: #fff;
+}
+.btn-link {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 6px;
+  text-decoration: none;
+  color: #000;
+  background-color: transparent;
+}
+.btn-link:hover {
+  background-color: #000000;
+  transition: background 0.2s ease-in-out;
 }
