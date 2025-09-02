@@ -2,18 +2,23 @@
   publish = "public"
 
 [[redirects]]
-  from = "/public/denied.html"
-  to = "/public/denied.html"
+  from = "/debug"
+  to = "/debug.html"
+  status = 200
+
+[[redirects]]
+  from = "/denied.html"
+  to = "/denied.html"
   status = 200
 
 [[redirects]]
   from = "/*"
-  to = "/index.html"
+  to = "/index.html?debug=member"
   status = 200
   force = true
   conditions = { Role = ["member"] }
 
 [[redirects]]
   from = "/*"
-  to = "/public/denied.html"
+  to = "/denied.html?debug=no-role"
   status = 302
