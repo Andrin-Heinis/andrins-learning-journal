@@ -1,0 +1,19 @@
+[build]
+  publish = "public"
+
+[[redirects]]
+  from = "/public/denied.html"
+  to = "/public/denied.html"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = true
+  conditions = { Role = ["member"] }
+
+[[redirects]]
+  from = "/*"
+  to = "/public/denied.html"
+  status = 302
