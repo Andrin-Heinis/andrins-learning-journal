@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Access denied</title>
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+</head>
+<body>
+  <main>
+    <div class="md" style="max-width:520px;margin-top:10vh;text-align:center;">
+      <h1>Access denied</h1>
+      <p>Bitte mit Google anmelden. Ich schalte dich danach frei.</p>
+      <button class="btn primary" id="login">Mit Google anmelden</button>
+      <p style="color:var(--muted);margin-top:12px;">Falls du keinen Zugang hast, melde dich kurz bei mir.</p>
+    </div>
+  </main>
+  <script>
+    document.addEventListener("DOMContentLoaded",function(){
+      var btn=document.getElementById("login");
+      if(btn){btn.addEventListener("click",function(){netlifyIdentity.open("login");});}
+      if(window.netlifyIdentity){
+        netlifyIdentity.on("init",function(user){ if(user){ window.location.replace("/"); }});
+        netlifyIdentity.on("login",function(user){ window.location.replace("/"); });
+      }
+    });
+  </script>
+</body>
+</html>
