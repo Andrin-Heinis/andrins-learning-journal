@@ -248,6 +248,32 @@ function parseFrontmatter(md) {
   const body = md.slice(m[0].length);
   return { meta, body };
 }
+function isExternalSrc(src) {
+  return (
+    /^(?:[a-z]+:)?\/\//i.test(src) ||
+    src.startsWith("data:") ||
+    src.startsWith("blob:") ||
+    src.startsWith("mailto:")
+  );
+}
+function normalizeImageSrc(src, mdPath) {
+  if (!src || isExternalSrc(src)) return src;
+  if (src.startsWith("/public/")) return src.replace(/^\/public\//, "/");
+  if (src.startsWith("public/")) return src.replace(/^public\//, "/");
+  if (src.startsWith("content/")) return src;
+  if (src.startsWith("/")) return src;
+  const baseDir = mdPath.split("/").slice(0, -1).join("/");
+  if (!baseDir) return src.replace(/^\.\//, "");
+  return `content/${baseDir}/${src.replace(/^\.\//, "")}`;
+}
+function fixImageSources(container, mdPath) {
+  const imgs = container.querySelectorAll("img");
+  imgs.forEach((img) => {
+    const raw = img.getAttribute("src") || "";
+    const fixed = normalizeImageSrc(raw, mdPath);
+    if (fixed && fixed !== raw) img.setAttribute("src", fixed);
+  });
+}
 
 /* -------- Sidebar tree -------- */
 function makeSummaryRow(text, icon) {
@@ -404,6 +430,7 @@ async function loadFile(path, a) {
     if (div.firstElementChild && /^H1$/i.test(div.firstElementChild.tagName)) {
       div.removeChild(div.firstElementChild);
     }
+    fixImageSources(div, path);
 
     card.append(head, div);
     wrap.appendChild(card);
@@ -472,6 +499,7 @@ async function loadWeek(folderPath) {
 
       const div = document.createElement("div");
       div.innerHTML = e.html;
+      fixImageSources(div, e.path);
 
       card.append(head, div);
       content.appendChild(card);

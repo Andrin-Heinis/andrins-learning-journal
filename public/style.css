@@ -482,9 +482,13 @@ button.week:hover .summary-row {
   max-width: 900px !important;
 }
 img {
-  width: 400px;
+  max-width: 100%;
+  width: 720px;
+  height: auto;
   display: block;
-  margin: 10px auto;
+  margin: 12px auto;
+  border-radius: 12px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
 }
 details {
   border-left: 1px solid var(--line);
